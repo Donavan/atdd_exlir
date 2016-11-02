@@ -1,0 +1,408 @@
+<!doctype html>
+<html>
+	<head>
+		<meta charset="utf-8">
+		<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+
+		<title>Browser Automation in Elixir</title>
+
+		<link rel="stylesheet" href="css/reveal.css">
+		<link rel="stylesheet" href="css/theme/league.css">
+
+		<!-- Theme used for syntax highlighting of code -->
+		<link rel="stylesheet" href="lib/css/zenburn.css">
+
+		<!-- Printing and PDF exports -->
+		<script>
+			var link = document.createElement( 'link' );
+			link.rel = 'stylesheet';
+			link.type = 'text/css';
+			link.href = window.location.search.match( /print-pdf/gi ) ? 'css/print/pdf.css' : 'css/print/paper.css';
+			document.getElementsByTagName( 'head' )[0].appendChild( link );
+		</script>
+	</head>
+	<body>
+		<div class="reveal">
+			<div class="slides">
+				<section>
+					<h2>Ain't nothin but a hound dog</h2>
+					<h4>Browser Automation in Elixir</h4>
+				</section>
+				<section>
+					<h2>whomai</h2>
+					<ul class="disc">
+						<li class="disc fragment">Automation Architect</li>
+            <li class="disc fragment">"Full Stack" developer</li>
+            <li class="disc fragment">Serial tinkerer</li>
+            <li class="disc fragment"><a href="#">NOT</a> an Elxir guru</li>
+					</ul>
+				</section>
+        <section>
+        <h2>Introducing <a href="#">Elixir</a></h2>
+          <section>
+            <h4>What is Elixir?</h4>
+            <ul class="disc">
+              <li class="disc fragment">A Ruby-inspired functional language built on the Erlang Virtual Machine </li>
+              <li class="disc fragment">Extends Erlang with macros, pipelines, and sigils</li>
+              <li class="disc fragment">Crazy fast</li>
+            </ul>
+          </section>
+          <section>
+             <pre >
+               <code class="hljs" data-trim contenteditable>
+               def import_feature(feature_hash, run_id) do
+    feature_params = Map.take(feature_hash, [:name, :line, :uri, :description]) |>
+                     Map.merge(%{ feature_id: feature_hash[:id], test_run_id: run_id })
+
+    { :ok, feature } = CukeFeature.changeset(%CukeFeature{}, feature_params)  |> Repo.insert
+
+    # Grab the feature tags
+    Repo.insert_all( CukeFeatureTag, Enum.flat_map(Map.get(feature_hash, :tags, []), fn(tag) ->
+                 Map.merge(tag, %{ cuke_feature_id: feature.id })] end) )
+
+
+    stats = Enum.filter(Map.get(feature_hash, :elements, []), fn(element) -> element[:keyword] != "Background" end) |>
+            Parallel.pmap(fn(scenario) -> import_scenario(scenario, feature.id) end) |>
+            scenario_stats
+
+    changes = Ecto.Changeset.change feature, stats
+    feature = Repo.update! changes
+  end
+
+               </code>
+             </pre>
+
+          </section>
+          <section>
+            <h4>What is Erlang?</h4>
+            <ul class="disc">
+              <li class="disc fragment">Created in 1986 by Ericsson</li>
+              <li class="disc fragment">Functional, concurrent language</li>
+              <li class="disc fragment">Based on Prolog, Smalltalk, CSP, and functional programming</li>
+              <li class="disc fragment">Built to run the telephone network</li>
+            </ul>
+          </section>
+
+          <section>
+             <pre >
+               <code class="hljs" data-trim contenteditable>
+              -module(bowling).
+ -export([test/0,score/1]).
+ -import(lists,[duplicate/2]).
+
+ test() ->
+ 0 = score(duplicate(10,{0,0})),
+ 60 = score(duplicate(10,{3,3})),
+ 21 = score([{4,6},{3,5}|duplicate(8,{0,0})]),
+ 23 = score([{4,6},{5,3}|duplicate(8,{0,0})]),
+ 26 = score([{10,pass},{5,3}|duplicate(8,{0,0})]),
+ 15 = score(duplicate(9,{0,0}) ++ [{4,6},{5,nothrow}]),
+ 18 = score(duplicate(9,{0,0}) ++ [{10,pass},{5,3}]),
+ ok.
+
+ score(Frame) ->
+   score(Frame,1,0).
+
+ score([{10,_}|T], 10, Total) ->
+   Total + 10 + element(1,hd(T)) + element(2,hd(T));
+ score([{First,Second}|T], Turn, Total) when First==10 ->
+   score(T, Turn+1, Total+10+element(1,hd(T))+element(2,hd(T)));
+ score([{First,Second}|T], Turn, Total) when First+Second==10, Turn==10 ->
+   Total + 10 + element(1,hd(T));
+ score([{First,Second}|T], Turn, Total) when First+Second==10 ->
+   score(T, Turn+1, Total+10+element(1,hd(T)));
+ score([{First,Second}|T], Turn, Total) ->
+   score(T, Turn+1, Total+First+Second);
+ score([], _Turn, Total) ->
+   Total.
+
+               </code>
+             </pre>
+          </section>
+      </section>
+
+        <section>
+          <h2>White Bread</h2>
+         <section>
+          <ul class="disc">
+            <li class="disc">Story BDD tool written in and for Elixir</li>
+            <li class="disc fragment">Based on cucumber</li>
+            <li class="disc fragment">Parses Gherkin formatted feature files and executes them as acceptance tests.</li>
+            <li class="disc fragment">NOT Cucumber</li>
+          </ul>
+         </section>
+          <section>
+            <h4>Add white bread to your project mix.exs</h4>
+            <pre >
+               <code class="hljs" data-trim contenteditable>
+ defp deps do
+    [
+        {:white_bread, "~> 2.5", only: [:dev, :test]}
+    ]
+end
+               </code>
+             </pre>
+            <h4>Run: <a href="#">mix deps.get</a></h4>
+          </section>
+          <section>
+            <h4>Create a feature</h4>
+            <pre >
+               <code class="hljs" data-trim contenteditable>
+ Feature: Test thing
+
+    Scenario: Test 200 status code page
+        Given I navigate to "http://the-internet.herokuapp.com/status_codes/200"
+        Then the page contains the header "Status Codes"
+               </code>
+             </pre>
+            <h4>Run: <a href="#">mix white_bread.run</a></h4>
+            <h5 class="fragment">And see it fail</h5>
+          </section>
+          <section>
+            <pre >
+               <code class="hljs" data-trim contenteditable>Default context module not found in features/contexts/default_context.exs.
+Create one [Y/n]?
+               </code>
+             </pre>
+            <h4>Answer <a href="#">y</a></h4>
+          </section>
+
+<section>
+          <pre>
+               <code class="hljs" data-trim contenteditable>
+ Test 200 status code page ---> failed
+1 scenario failed for Test thing
+  - Test 200 status code page --> undefined step: I navigate to "http://the-internet.herokuapp.com/status_codes/200" implement with
+
+given_ ~r/^I navigate to "(?&lt;argument_one&gt;[^"]+)"$/,
+fn state, %{argument_one: _argument_one} ->
+  {:ok, state}
+end
+               </code>
+             </pre>
+          <h4>Function definition in error message</h4>
+        </section>
+
+          <section>
+            <h4>Create Steps in <a href="#">default_context.exs</a></h4>
+          <pre>
+               <code class="hljs" data-trim contenteditable>
+ defmodule WhiteBread.DefaultContext do
+  use WhiteBread.Context
+
+    given_ ~r/^I navigate to "(?&lt;argument_one&gt;[^"]+)"$/, fn state, %{argument_one: _argument_one} ->
+        {:ok, state}
+    end
+end
+               </code>
+             </pre>
+            <h4>Rinse and repeat</h4>
+          </section>
+
+          <section>
+            <pre>
+               <code class="hljs" data-trim contenteditable>
+defmodule WhiteBread.DefaultContext do
+  use WhiteBread.Context
+
+    given_ ~r/^I navigate to "(?&lt;argument_one&gt;[^"]+)"$/, fn state, %{argument_one: _argument_one} ->
+        {:ok, state}
+    end
+
+    then_ ~r/^the page contains the header "(?&lt;argument_one&gt;[^"]+)"$/, fn state, %{argument_one: _argument_one} ->
+        {:ok, state}
+    end
+
+end
+               </code>
+             </pre>
+          </section>
+          <section>
+            <h4>Run <a href="#">mix white_bread.run</a> again</h4>
+            <pre>
+               <code class="hljs" data-trim contenteditable>
+ Test 200 status code page ---> ok
+All features passed.
+               </code>
+             </pre>
+          </section>
+
+        </section>
+
+        <section>
+          <h2>Doing something with our steps</h2>
+          <img src="https://media.giphy.com/media/wErJXg1tIgHXG/giphy.gif">
+        </section>
+
+        <section>
+
+          <section>
+            <h2>About Hound</h2>
+            <ul class="disc">
+              <li class="disc fragment">Browser automation</li>
+              <li class="disc fragment">Supports Selenium (Firefox, Chrome), ChromeDriver and PhantomJs.</li>
+              <li class="disc fragment">Implements the WebDriver Wire Protocol.</li>
+              <li class="disc fragment">Internet Explorer may work under Selenium, but hasn’t been tested.</li>
+            </ul>
+          </section>
+
+          <section>
+            <h5>use <a href="#">Hound.Helpers</a></h5>
+            <ul class="disc">
+              <li class="disc fragment"><a href="#">Cookie</a>: get/set/delete cookies</li>
+              <li class="disc fragment"><a href="#">Dialog</a>: handle Javascript dialogs alert(), prompt() and confirm()</li>
+              <li class="disc fragment"><a href="#">Element</a>: Functions to work with an element</li>
+              <li class="disc fragment"><a href="#">Log</a>: Functions to work with the console log</li>
+              <li class="disc fragment"><a href="#">Orientation</a>: Get/set orientation functions</li>
+              <li class="disc fragment"><a href="#">Page</a>: element finders, form fillers and page-related functions</li>
+              <li class="disc fragment"><a href="#">Screenshot</a>: Provides helper function to take screenshots</li>
+              <li class="disc fragment"><a href="#">ScriptExecution</a>: Functions to execute javascript</li>
+              <li class="disc fragment"><a href="#">Session</a>: Session helpers</li>
+              <li class="disc fragment"><a href="#">Window</a>: Window size and other window-related functions</li>
+            </ul>
+          </section>
+        </section>
+
+          <section>
+            <h2>Finding stuff</h2>
+            <section>
+              <pre><code>find_element(strategy, selector, retries \\ 5)</code></pre>
+              <h5>Finds element on current page. It returns an element that can be used with other element functions.</h5>
+                <ul class="disc">
+                  <li class="disc">The first argument is the strategy.</li>
+                  <li class="disc">The second argument is the selector.</li>
+                  <li class="disc">Valid selector strategies are <a href="#">:css</a>, <a href="#">:class</a>, <a href="#">:id</a>, <a href="#">:name</a>, <a href="#">:tag</a>, <a href="#">:xpath</a>, <a href="#">:link_text</a> and <a href="#">:partial_link_text</a></li>
+                  <li class="disc">Raises if the element is not found or an error happens.</li>
+                </ul>
+            </section>
+            <section>
+              <pre>
+               <code class="hljs" data-trim contenteditable>
+find_element(:name, "username")
+find_element(:class, "example")
+find_element(:id, "example")
+find_element(:css, ".example")
+find_element(:tag, "footer")
+find_element(:link_text, "Home")
+               </code>
+              </pre>
+
+            </section>
+            <section>
+            <pre><code>find_within_element(element, strategy, selector, retries \\ 5)</code></pre>
+              <h5>Finds element within a specific element. Returns an element to use with element helper functions.</h5>
+              <ul class="disc">
+                <li class="disc">The first argument is the element within which you want to search.</li>
+                <li class="disc">The second argument is the strategy.</li>
+                <li class="disc">The third argument is the selector.</li>
+                <li class="disc">Valid selector strategies are <a href="#">:css</a>, <a href="#">:class</a>, <a href="#">:id</a>, <a href="#">:name</a>, <a href="#">:tag</a>, <a href="#">:xpath</a>, <a href="#">:link_text</a> and <a href="#">:partial_link_text</a></li>
+                <li class="disc">Raises if the element is not found or an error happens.</li>
+              </ul>
+            </section>
+            <section>
+              <pre>
+               <code class="hljs" data-trim contenteditable>
+# First get an element to search within
+parent_element = find_element(:class, "container")
+
+find_within_element(parent_element, :name, "username")
+find_within_element(parent_element, :class, "example")
+find_within_element(parent_element, :id, "example")
+find_within_element(parent_element, :css, ".example")
+find_within_element(parent_element, :tag, "footer")
+find_within_element(parent_element, :link_text, "Home")
+               </code>
+              </pre>
+
+            </section>
+          </section>
+
+
+
+
+
+        <section>
+          <h2>Using Hound</h2>
+          <section>
+            <h5>The navigation step</h5>
+          <pre>
+               <code class="hljs" data-trim contenteditable>
+ given_ ~r/^I navigate to "(?&lt;url&gt;[^"]+)"$/, fn state, %{url: url} ->
+    navigate_to(url)
+    {:ok, state}
+end
+               </code>
+             </pre>
+          </section>
+
+          <section>
+            <h5>The assertion step</h5>
+            <pre>
+               <code class="hljs" data-trim contenteditable>
+ then_ ~r/^the page contains the header "(?&lt;expected_header&gt;[^"]+)"$/, fn state, %{expected_header: expected_header} ->
+    actual_header = visible_text({:tag, "h3"})
+
+    assert actual_header == expected_header
+    {:ok, state}
+end
+               </code>
+             </pre>
+          </section>
+
+          <section>
+            <h5>Running our tests</h5>
+            <pre>
+               <code class="hljs" data-trim contenteditable>
+ Test 200 status code page ---> failed
+
+
+Assertion with == failed
+code: actual_header == expected_header
+lhs:  "Status Codes"
+rhs:  "Traffic Cones"
+               </code>
+             </pre>
+          </section>
+        </section>
+        <section>
+          <h5>This is not Ruby/Watir/Cucumber</h5>
+          <ul class="disc">
+            <li class="disc fragment"><a href="#">PageObject</a> doesn't exist.</li>
+            <li class="disc fragment">Browsers must be started <a href="#">manually</a>.</li>
+            <li class="disc fragment"><a href="#">RSpec matchers</a> MIA.</li>
+            <li class="disc fragment"><a href="#">Waiting</a> ain't nobody got time for that</li>
+            <li class="disc fragment"><a href="#">Tooling</a> waaay short of a full box.</li>
+          </ul>
+        </section>
+
+        <section>
+          <h5>Why would you use this?</h5>
+          <ul class="disc">
+            <li class="disc fragment"><a href="#">Speed</a></li>
+            <li class="disc fragment"><a href="#">Deployment</a></li>
+            <li class="disc fragment"><a href="#">Cool factor</a></li>
+          </ul>
+        </section>
+
+			</div>
+		</div>
+
+		<script src="lib/js/head.min.js"></script>
+		<script src="js/reveal.js"></script>
+
+		<script>
+			// More info https://github.com/hakimel/reveal.js#configuration
+			Reveal.initialize({
+				history: true,
+
+				// More info https://github.com/hakimel/reveal.js#dependencies
+				dependencies: [
+					{ src: 'plugin/markdown/marked.js' },
+					{ src: 'plugin/markdown/markdown.js' },
+					{ src: 'plugin/notes/notes.js', async: true },
+					{ src: 'plugin/highlight/highlight.js', async: true, callback: function() { hljs.initHighlightingOnLoad(); } }
+				]
+			});
+		</script>
+	</body>
+</html>
