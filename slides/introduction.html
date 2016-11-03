@@ -32,7 +32,7 @@
 					<h2>whomai</h2>
 					<ul class="disc">
 						<li class="disc fragment">Automation Architect</li>
-            <li class="disc fragment">"Full Stack" developer</li>
+            <li class="disc fragment">Former "Full Stack" developer</li>
             <li class="disc fragment">Serial tinkerer</li>
             <li class="disc fragment"><a href="#">NOT</a> an Elxir guru</li>
 					</ul>
@@ -122,7 +122,7 @@
       </section>
 
         <section>
-          <h2>White Bread</h2>
+          <h3>White Bread</h3>
          <section>
           <ul class="disc">
             <li class="disc">Story BDD tool written in and for Elixir</li>
@@ -227,6 +227,50 @@ All features passed.
              </pre>
           </section>
 
+          <section>
+              <h4>Suites and subcontexts</h4>
+              <pre>
+                <code>defmodule WhiteBread.Example.Config do
+  use WhiteBread.SuiteConfiguration
+
+  suite name:          "Default",
+        context:       WhiteBread.Example.DefaultContext,
+        feature_paths: ["features/sub_dir_one"]
+
+  suite name:          "Alternate",
+        context:       WhiteBread.Example.AlternateContext,
+        feature_paths: ["features/sub_dir_two"]
+
+  suite name:          "Alternate - Songs",
+        context:       WhiteBread.Example.AlternateContext,
+        feature_paths: ["features/sub_dir_one"],
+        tags:          ["songs"]
+end</code>
+              </pre>
+          </section>
+
+          <section>
+            <h4>Suites and subcontexts</h4>
+            <pre>
+                <code>defmodule WhiteBread.Example.Config do
+  use WhiteBread.SuiteConfiguration
+
+  suite name:          "Default",
+        context:       WhiteBread.Example.DefaultContext,
+        feature_paths: ["features/sub_dir_one"]
+
+  suite name:          "Alternate",
+        context:       WhiteBread.Example.AlternateContext,
+        feature_paths: ["features/sub_dir_two"]
+
+  suite name:          "Alternate - Songs",
+        context:       WhiteBread.Example.AlternateContext,
+        feature_paths: ["features/sub_dir_one"],
+        tags:          ["songs"]
+end</code>
+              </pre>
+          </section>
+
         </section>
 
         <section>
@@ -317,10 +361,6 @@ find_within_element(parent_element, :link_text, "Home")
             </section>
           </section>
 
-
-
-
-
         <section>
           <h2>Using Hound</h2>
           <section>
@@ -381,6 +421,15 @@ rhs:  "Traffic Cones"
             <li class="disc fragment"><a href="#">Speed</a></li>
             <li class="disc fragment"><a href="#">Deployment</a></li>
             <li class="disc fragment"><a href="#">Cool factor</a></li>
+          </ul>
+        </section>
+
+        <section>
+          <h5>Resources</h5>
+          <ul class="disc">
+            <li class="disc"><a href="#">nickstalter.com</a></li>
+            <li class="disc fragment"><a href="#">"Rubyists, have a sip of Elixir!"</a>On confreaks.tv</li>
+            <li class="disc fragment"><a href="#">elixir-lang.org</a></li>
           </ul>
         </section>
 
